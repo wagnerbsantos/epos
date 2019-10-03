@@ -3,14 +3,20 @@
 #ifndef __machine_h
 #define __machine_h
 
+#include <machine/machine.h>
 #include <machine/ic.h>
 #include <machine/timer.h>
 #include <machine/rtc.h>
 #include <machine/display.h>
-#include <machine/common.h>
 
 #ifdef __PCI_H
 #include <machine/pci.h>
+#endif
+#ifdef __FPGA_H
+#include <machine/fpga.h>
+#endif
+#ifdef __SCRATCHPAD_H
+#include <machine/scratchpad.h>
 #endif
 #ifdef __UART_H
 #include <machine/uart.h>
@@ -33,11 +39,12 @@
 #ifdef __KEYBOARD_H
 #include <machine/keyboard.h>
 #endif
+#ifdef __NIC_H
+#include <machine/nic.h>
+#include __NIC_H
+#endif
 #ifdef __AES_H
 #include <machine/aes.h>
-#endif
-#ifdef __CO2_H
-#include <machine/co2.h>
 #endif
 
 #endif

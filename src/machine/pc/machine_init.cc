@@ -17,8 +17,25 @@ void Machine::init()
     if(Traits<PCI>::enabled)
         PCI::init();
 
+#ifdef __SCRATCHPAD_H
+    if(Traits<Scratchpad>::enabled)
+        Scratchpad::init();
+#endif
+
+#ifdef __KEYBOARD_H
     if(Traits<Keyboard>::enabled)
         Keyboard::init();
+#endif
+
+#ifdef __FPGA_H
+    if(Traits<FPGA>::enabled)
+        FPGA::init();
+#endif
+
+#ifdef __NIC_H
+    if(Traits<Ethernet>::enabled)
+        Initializer<Ethernet>::init();
+#endif
 }
 
 __END_SYS

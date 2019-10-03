@@ -4,11 +4,9 @@
 #define __time_h
 
 #include <architecture.h>
+#include <machine.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
-#include <machine/rtc.h>
-#include <machine/ic.h>
-#include <machine/timer.h>
 
 __BEGIN_SYS
 
@@ -33,8 +31,13 @@ public:
 
 class Alarm
 {
-    friend class System;
-    friend class Alarm_Chronometer;
+    friend class System;                        // for init()
+    template<typename> friend class Clerk;      // for elapsed()
+    friend class Alarm_Chronometer;             // for elapsed()
+    friend class Periodic_Thread;               // for ticks() and elapsed()
+    friend class RT_Thread;                     // for ticks() and elapsed()
+    friend class Scheduling_Criteria::FCFS;     // for ticks() and elapsed()
+    friend class Scheduling_Criteria::EDF;      // for ticks() and elapsed()
 
 private:
     typedef Timer::Tick Tick;
@@ -48,7 +51,7 @@ public:
     enum { INFINITE = RTC::INFINITE };
 
 public:
-    Alarm(const Microsecond & time, Handler * handler, int times = 1);
+    Alarm(const Microsecond & time, Handler * handler, unsigned int times = 1);
     ~Alarm();
 
     const Microsecond & period() const { return _time; }
@@ -63,6 +66,8 @@ public:
 private:
     static void init();
 
+    static volatile Tick & elapsed() { return _elapsed; }
+
     static Microsecond timer_period() { return 1000000 / frequency(); }
     static Tick ticks(const Microsecond & time) { return (time + timer_period() / 2) / timer_period(); }
 
@@ -74,7 +79,7 @@ private:
 private:
     Microsecond _time;
     Handler * _handler;
-    int _times;
+    unsigned int _times;
     Tick _ticks;
     Queue::Element _link;
 
@@ -149,8 +154,8 @@ public:
     Hertz frequency() { return Alarm::frequency(); }
 
     void reset() { _start = 0; _stop = 0; }
-    void start() { if(_start == 0) _start = Alarm::_elapsed; }
-    void lap() { if(_start != 0) _stop = Alarm::_elapsed; }
+    void start() { if(_start == 0) _start = Alarm::elapsed(); }
+    void lap() { if(_start != 0) _stop = Alarm::elapsed(); }
     void stop() { lap(); }
 
     // The parenthesis reduces precision even more, but avoids overflow
@@ -162,7 +167,7 @@ private:
         if(_start == 0)
             return 0;
         if(_stop == 0)
-            return Alarm::_elapsed - _start;
+            return Alarm::elapsed() - _start;
         return _stop - _start;
     }
 
@@ -172,7 +177,7 @@ private:
     Time_Stamp _stop;
 };
 
-class Chronometer: public IF<Traits<TSC>::enabled, TSC_Chronometer, Alarm_Chronometer>::Result {};
+class Chronometer: public IF<Traits<TSC>::enabled && !Traits<System>::multicore, TSC_Chronometer, Alarm_Chronometer>::Result {};
 
 __END_SYS
 

@@ -8,6 +8,9 @@ __BEGIN_SYS
 
 void System::init()
 {
+    if(Traits<MMU>::colorful)
+        Page_Coloring::init();
+
     if(Traits<Alarm>::enabled)
         Alarm::init();
 

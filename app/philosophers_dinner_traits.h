@@ -145,8 +145,14 @@ template<> struct Traits<System>: public Traits<void>
 
 template<> struct Traits<Thread>: public Traits<void>
 {
+    typedef Scheduling_Criteria::RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
     static const bool trace_idle = hysterically_debugged;
+};
+
+template<> struct Traits<Scheduler<Thread>>: public Traits<void>
+{
+    static const bool debugged = Traits<Thread>::trace_idle || hysterically_debugged;
 };
 
 template<> struct Traits<Alarm>: public Traits<void>

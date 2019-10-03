@@ -5,7 +5,7 @@
 
 #include <architecture/cpu.h>
 #include <machine/ic.h>
-#include <machine/pc/memory_map.h>
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 
@@ -141,7 +141,7 @@ public:
         return true;
     }
 
-    static void ipi_send(int dest, int interrupt) {}
+    static void ipi(int dest, int interrupt) {}
 };
 
 // Intel IA-32 APIC (internal, not tested with 82489DX)
@@ -347,7 +347,7 @@ public:
         return read(VERSION);
     }
 
-    static void ipi_send(unsigned int cpu, unsigned int interrupt);
+    static void ipi(unsigned int cpu, unsigned int interrupt);
     static void ipi_init(volatile int * status);
     static void ipi_start(Log_Addr entry, volatile int * status);
 
@@ -356,7 +356,12 @@ public:
         // subject to memory remappings. We also cannot be sure about
         // global constructors here
         remap(addr);
-        disable();
+        if(Traits<System>::multicore) {
+            clear();
+            enable();
+            connect();
+        } else
+            disable();
     }
 
     static int eoi(unsigned int i) { // End of interrupt
@@ -460,13 +465,13 @@ private:
 };
 
 // IC uses i8259A on single-processor machines and the APIC timer on MPs
-class IC: private IC_Common, private i8259A
+class IC: private IC_Common, private IF<Traits<System>::multicore, APIC, i8259A>::Result
 {
     friend class Machine;
     friend class Thread;
 
 private:
-    typedef i8259A Engine;
+    typedef IF<Traits<System>::multicore, APIC, i8259A>::Result Engine;
 
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
@@ -525,23 +530,11 @@ public:
         Engine::disable(i);
     }
 
-    using Engine::ipi_send;
+    using Engine::ipi;
     using Engine::irq2int;
 
 private:
-    static void dispatch(unsigned int i) {
-        bool not_spurious = true;
-        if((i >= INT_FIRST_HARD) && (i <= INT_LAST_HARD))
-            not_spurious = eoi(i);
-        if(not_spurious) {
-            if((i != INT_TIMER) || Traits<IC>::hysterically_debugged)
-                db<IC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
-            _int_vector[i](i);
-        } else {
-            if(i != INT_LAST_HARD)
-                db<IC>(TRC) << "IC::spurious interrupt (" << i << ")" << endl;
-        }
-    }
+    static void dispatch(unsigned int i);
 
     // Logical handlers
     static void int_not(const Interrupt_Id & i);

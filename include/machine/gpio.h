@@ -21,7 +21,8 @@ public:
     enum Edge {
         RISING,
         FALLING,
-        BOTH
+        BOTH,
+        NONE
     };
 
     enum Direction {
@@ -35,12 +36,25 @@ public:
         DOWN,
         FLOATING
     };
+
+    typedef unsigned int Port;
+    enum {
+        A,
+        B,
+        C,
+        D,
+        E,
+        F
+    };
+
+    typedef unsigned int Pin;
 };
 
 __END_SYS
 
-#ifdef __GPIO_H
+#endif
+
+#if defined(__GPIO_H) && !defined(__common_only__)
 #include __GPIO_H
 #endif
 
-#endif

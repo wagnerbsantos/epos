@@ -6,7 +6,7 @@ SUBDIRS	:= etc tools src app img
 
 all: FORCE
 ifndef APPLICATION
-		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) all1;)
+		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) prebuild_$(app) all1 posbuild_$(app);)
 		$(MAKE) clean1
 else
 		$(MAKE) all1
@@ -19,7 +19,7 @@ $(SUBDIRS): FORCE
 
 run: FORCE
 ifndef APPLICATION
-		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) run1;)
+		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) prerun_$(app) run1;)
 else
 		$(MAKE) run1
 endif
@@ -55,7 +55,7 @@ flash1: all1
 
 TESTS_APPS := $(subst .cc,,$(shell find $(TST) -name \*_test.cc -printf "%f\n"))
 TESTS_COMPILED := $(subst .img,,$(shell find $(IMG) -name \*_test.img -printf "%f\n"))
-TESTS_COMPILED := $(TEST_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*_test.bin -printf "%f\n"))
+TESTS_COMPILED := $(TESTS_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*_test.bin -printf "%f\n"))
 TESTS_FINISHED := $(subst .out,,$(shell find $(IMG) -name \*_test.out -printf "%f\n"))
 TESTS_SOURCES := $(shell find $(TST) -name \*_test.cc -printf "%p\n")
 UNFINISHED_TESTS := $(filter-out $(TESTS_FINISHED),$(TESTS_APPS))
@@ -64,13 +64,11 @@ test: $(subst .cc,_traits.h,$(TESTS_SOURCES))
 		$(INSTALL) $(TESTS_SOURCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TESTS_SOURCES)) $(APP)
 		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst) prerun_$(tst) run1 posbuild_$(tst);)
-		$(foreach tst,$(TESTS_APPS),$(CLEAN) $(APP)/$(tst)*;)
-
-buildtests: $(subst .cc,_traits.h,$(TESTS_SOURCES))
+		
+buildtest: $(subst .cc,_traits.h,$(TESTS_SOURCES))
 		$(INSTALL) $(TESTS_SOURCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TESTS_SOURCES)) $(APP)
 		$(foreach tst,$(UNCOMPILED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst);)
-		$(foreach tst,$(TESTS_APPS),$(CLEAN) $(APP)/$(tst)*;)
 
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
 prebuild_$(APPLICATION):
@@ -78,8 +76,8 @@ prebuild_$(APPLICATION):
 posbuild_$(APPLICATION):
 		@echo "done!"
 prerun_$(APPLICATION):
-		@echo "Cooling down for 10s ..."
-		sleep 10
+#		@echo "Cooling down for 10s ..."
+#		sleep 10
 		@echo "Running $(APPLICATION) ..."
 
 clean: FORCE

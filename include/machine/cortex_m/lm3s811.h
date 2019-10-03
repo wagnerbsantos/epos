@@ -368,7 +368,11 @@ public:
 protected:
     LM3S811() {}
 
-    static void reboot() { scs(AIRCR) = 0x05fa * VECTKEY | SYSRESREQ; }
+    static void reboot() {
+        Reg32 val = scs(AIRCR) & (~((-1u / VECTKEY) * VECTKEY));
+        val |= 0x05fa * VECTKEY | SYSRESREQ;
+        scs(AIRCR) = val;
+    }
 
     static void delay(const RTC::Microsecond & time) {
         assert(Traits<TSC>::enabled);
