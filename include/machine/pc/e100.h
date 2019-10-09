@@ -728,6 +728,18 @@ private:
 
 };
 
+class i82557b: private i8255x {
+
+// TODO:
+// herdar nic
+// implementar métodos da nic (?)
+// fazer compilar
+// add método init
+// add construtor
+// preciso de um dma_buffer aqui
+
+}
+
 __END_SYS
 
 #endif
